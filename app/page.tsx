@@ -55,6 +55,25 @@ async function compressAudio(file: File): Promise<File> {
       pcm[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
     }
     const lamejs = await import("lamejs");
+    // lamejs@1.2.1's src/js modules reference MPEGMode (in Lame.js), Lame (in
+    // BitStream.js) and BitStream (in QuantizePVT.js) as bare globals. Those
+    // only exist in the prebuilt lame.all.js script bundle; in a
+    // webpack/Next.js module bundle they are undefined and `new Mp3Encoder()`
+    // throws "MPEGMode is not defined". Provide them on globalThis first.
+    const g = globalThis as unknown as {
+      MPEGMode?: unknown;
+      Lame?: unknown;
+      BitStream?: unknown;
+    };
+    if (!g.MPEGMode || !g.Lame || !g.BitStream) {
+      const deep = async (p: string) => {
+        const m = await import(p);
+        return (m as unknown as { default?: unknown }).default ?? m;
+      };
+      g.MPEGMode = await deep("lamejs/src/js/MPEGMode.js");
+      g.Lame = await deep("lamejs/src/js/Lame.js");
+      g.BitStream = await deep("lamejs/src/js/BitStream.js");
+    }
     const encoder = new lamejs.Mp3Encoder(1, decoded.sampleRate, 64);
     const chunks: Int8Array[] = [];
     const BLOCK = 1152;
