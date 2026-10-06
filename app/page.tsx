@@ -72,8 +72,11 @@ async function compressAudio(file: File): Promise<File> {
   }
 }
 
-export default function Home() {
-  const [status, setStatus] = useState<Status | null>(null);
+// Pre-cloned voice: "Stefanie Sun" (cloned 2026-10-05 from the 2014 interview
+// sample). Prefilled in the TTS section; a voice cloned in the UI overwrites it.
+const DEFAULT_VOICE_ID = "ym4g8Bf0cwANMRzy2vMC";
+
+export default function Home() {  const [status, setStatus] = useState<Status | null>(null);
   const [password, setPassword] = useState("");
 
   // --- clone state ---
@@ -88,7 +91,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
 
   // --- tts state ---
-  const [ttsVoiceId, setTtsVoiceId] = useState("");
+  const [ttsVoiceId, setTtsVoiceId] = useState(DEFAULT_VOICE_ID);
   const [text, setText] = useState("");
   const [model, setModel] = useState(MODELS[0].id);
   const [stability, setStability] = useState(0.5);
