@@ -66,13 +66,16 @@ async function compressAudio(file: File): Promise<File> {
       BitStream?: unknown;
     };
     if (!g.MPEGMode || !g.Lame || !g.BitStream) {
-      const deep = async (p: string) => {
-        const m = await import(p);
-        return (m as unknown as { default?: unknown }).default ?? m;
-      };
-      g.MPEGMode = await deep("lamejs/src/js/MPEGMode.js");
-      g.Lame = await deep("lamejs/src/js/Lame.js");
-      g.BitStream = await deep("lamejs/src/js/BitStream.js");
+      // NOTE: these must be literal specifiers so webpack can resolve and
+      // bundle them at build time; import(variable) fails at runtime.
+      const mpegModeMod = await import("lamejs/src/js/MPEGMode.js");
+      const lameMod = await import("lamejs/src/js/Lame.js");
+      const bitStreamMod = await import("lamejs/src/js/BitStream.js");
+      const unwrap = (m: unknown) =>
+        (m as { default?: unknown }).default ?? m;
+      g.MPEGMode = unwrap(mpegModeMod);
+      g.Lame = unwrap(lameMod);
+      g.BitStream = unwrap(bitStreamMod);
     }
     const encoder = new lamejs.Mp3Encoder(1, decoded.sampleRate, 64);
     const chunks: Int8Array[] = [];
